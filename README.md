@@ -43,7 +43,7 @@ Projeyi bilgisayarınıza indirdikten sonra Backend ve Frontend'i ayrı terminal
 
 ### 1. Projeyi Klonlayın
 ```bash
-git clone [https://github.com/KULLANICI_ADIN/PrepAI.git](https://github.com/KULLANICI_ADIN/PrepAI.git)
+git clone [https://github.com/kadirkilicoglu/PrepAI.git](https://github.com/kadirkilicoglu/PrepAI.git)
 cd PrepAI
 
 ```
