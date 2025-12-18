@@ -1,0 +1,48 @@
+/* Google Fonts'tan Modern Yazı Tipleri */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+  /* Başlıklar için modern, geometrik font */
+  --font-heading: 'Outfit', sans-serif;
+  /* Metinler için okunaklı, temiz font */
+  --font-body: 'Inter', sans-serif;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #0f172a; /* Sayfa yüklenirken beyaz parlamayı önler */
+  color: #e2e8f0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em; /* Başlıklara daha sıkı, modern bir hava katar */
+}
+
+/* Inputlardaki otomatik doldurma (autofill) arka plan rengini düzelt */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active{
+    -webkit-box-shadow: 0 0 0 30px #1e293b inset !important;
+    -webkit-text-fill-color: white !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Seçim Rengi (Selection) */
+::selection {
+  background-color: rgba(99, 102, 241, 0.3); /* Indigo */
+  color: white;
+}
+
+/* Scrollbar Gizleme (İsteğe bağlı, temiz görünüm için) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
