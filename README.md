@@ -3,6 +3,14 @@
 ```markdown
 # 🚀 PrepAI - Yapay Zeka Destekli Sınav Hazırlama Platformu
 
+<img width="1919" height="883" alt="Ekran görüntüsü 2025-12-18 204858" src="https://github.com/user-attachments/assets/bf03cc9f-056a-4c10-84f2-47563291e407" />
+<img width="1917" height="866" alt="Ekran görüntüsü 2025-12-18 204840" src="https://github.com/user-attachments/assets/096ae462-d278-4cee-8fb4-c1e68a68bbce" />
+<img width="1919" height="878" alt="Ekran görüntüsü 2025-12-18 204828" src="https://github.com/user-attachments/assets/a154541f-0ad7-4457-afcd-75f0c23e4ba9" />
+<img width="1919" height="871" alt="Ekran görüntüsü 2025-12-18 204713" src="https://github.com/user-attachments/assets/6a0fa346-88a2-42a4-8643-b75aad85a22f" />
+<img width="1917" height="877" alt="Ekran görüntüsü 2025-12-18 204659" src="https://github.com/user-attachments/assets/b8f34f30-c0dd-461d-a918-63116184e7e2" />
+<img width="1918" height="880" alt="Ekran görüntüsü 2025-12-18 204645" src="https://github.com/user-attachments/assets/291cb2eb-339b-4a10-8837-f8d013ed6dfa" />
+
+
 PrepAI (arayüz adıyla **CogniScribe AI**), yüklediğiniz PDF ders notlarını analiz ederek Google Gemini AI desteğiyle otomatik sınavlar, konu özetleri ve detaylı başarı analizleri oluşturan modern bir web uygulamasıdır.
 
 
