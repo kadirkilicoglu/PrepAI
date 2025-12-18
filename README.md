@@ -5,7 +5,6 @@
 
 PrepAI (arayüz adıyla **CogniScribe AI**), yüklediğiniz PDF ders notlarını analiz ederek Google Gemini AI desteğiyle otomatik sınavlar, konu özetleri ve detaylı başarı analizleri oluşturan modern bir web uygulamasıdır.
 
-![Project Banner](https://via.placeholder.com/1000x300?text=CogniScribe+AI+Preview)
 
 ## ✨ Özellikler
 
