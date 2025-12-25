@@ -17,7 +17,7 @@ import SummaryDetail from "./pages/SummaryDetail";
 import FlashcardPage from "./pages/FlashcardPage";
 import FlashcardDetail from "./pages/FlashcardDetail"; // <--- YENİ EKLENDİ
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:8000";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
 const API = `${BACKEND_URL}/api`;
 
 axios.interceptors.request.use((config) => {
