@@ -2,6 +2,7 @@ fastapi
 uvicorn
 pymongo
 python-dotenv
+motor
 google-generativeai
 pypdf2
 passlib[bcrypt]
