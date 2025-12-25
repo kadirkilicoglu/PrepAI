@@ -1,8 +1,16 @@
+<<<<<<< HEAD
+=======
+
+
+```markdown
+>>>>>>> 0ab9018fbf9e4642a5a7428d95a652fc848f6cb3
 # 🚀 PrepAI - Yapay Zeka Destekli Sınav Hazırlama Platformu
 
-PrepAI (arayüz adıyla **CogniScribe AI**), yüklediğiniz PDF ders notlarını analiz ederek Google Gemini AI desteğiyle otomatik sınavlar, konu özetleri ve detaylı başarı analizleri oluşturan modern bir web uygulamasıdır.
 
-![Project Banner](https://via.placeholder.com/1000x300?text=CogniScribe+AI+Preview)
+
+
+PrepAI, yüklediğiniz PDF ders notlarını analiz ederek Google Gemini AI desteğiyle otomatik sınavlar, konu özetleri ve detaylı başarı analizleri oluşturan modern bir web uygulamasıdır.
+
 
 ## ✨ Özellikler
 
@@ -40,7 +48,7 @@ Projeyi bilgisayarınıza indirdikten sonra Backend ve Frontend'i ayrı terminal
 
 ### 1. Projeyi Klonlayın
 ```bash
-git clone [https://github.com/KULLANICI_ADIN/PrepAI.git](https://github.com/KULLANICI_ADIN/PrepAI.git)
+git clone [https://github.com/kadirkilicoglu/PrepAI.git](https://github.com/kadirkilicoglu/PrepAI.git)
 cd PrepAI
 
 ```
