@@ -1,8 +1,3 @@
-Haklısın, bir önceki adımda frontend kurulum detaylarını biraz hızlı geçmiş olabilirim. Projenin GitHub’da tam anlaşılması için **Frontend** kısmını da adım adım, kütüphane kurulumları ve çalıştırma komutlarıyla birlikte detaylandırdım.
-
-Aşağıdaki içeriği kopyalayıp ana dizindeki `README.md` dosyasının tamamıyla değiştir:
-
-```markdown
 # 🚀 PrepAI - Yapay Zeka Destekli Sınav Hazırlama Platformu
 
 PrepAI (arayüz adıyla **CogniScribe AI**), yüklediğiniz PDF ders notlarını analiz ederek Google Gemini AI desteğiyle otomatik sınavlar, konu özetleri ve detaylı başarı analizleri oluşturan modern bir web uygulamasıdır.

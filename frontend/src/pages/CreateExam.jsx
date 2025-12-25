@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../co
 import { Label } from "../components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Input } from "../components/ui/input";
-import { ArrowLeft, Upload, FileText, Loader2, Sparkles, Settings2 } from "lucide-react";
+import { ArrowLeft, Upload, FileText, Loader2, Sparkles, Settings2, Folder } from "lucide-react";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:8000";
 const API = `${BACKEND_URL}/api`;
@@ -17,11 +17,33 @@ export default function CreateExam() {
   const [loading, setLoading] = useState(false);
   const [pdfFile, setPdfFile] = useState(null);
   const [pdfName, setPdfName] = useState("");
+  
+  // Sınav Ayarları State'i
   const [examConfig, setExamConfig] = useState({
     exam_type: "mixed",
     difficulty: "medium",
     num_questions: 10
   });
+
+  // Klasör State'leri
+  const [folders, setFolders] = useState([]);
+  const [selectedFolderId, setSelectedFolderId] = useState("root"); // Varsayılan: Ana Dizin
+
+  useEffect(() => {
+    fetchFolders();
+  }, []);
+
+  const fetchFolders = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${API}/folders`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setFolders(response.data);
+    } catch (error) {
+      console.error("Klasörler yüklenemedi", error);
+    }
+  };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -55,6 +77,11 @@ export default function CreateExam() {
       formData.append("exam_type", examConfig.exam_type);
       formData.append("difficulty", examConfig.difficulty);
       formData.append("num_questions", examConfig.num_questions);
+
+      // Klasör seçildiyse (ve 'root' değilse) ekle
+      if (selectedFolderId && selectedFolderId !== "root") {
+        formData.append("folder_id", selectedFolderId);
+      }
 
       const response = await axios.post(`${API}/exams/create`, formData, {
         headers: {
@@ -161,6 +188,32 @@ export default function CreateExam() {
                     )}
                   </div>
                 </div>
+              </div>
+
+              {/* KLASÖR SEÇİMİ (YENİ) */}
+              <div className="space-y-3">
+                 <Label className="text-slate-200 text-sm font-medium ml-1 flex items-center gap-2">
+                    <Folder className="w-4 h-4 text-indigo-400" />
+                    Kayıt Yeri (İsteğe Bağlı)
+                 </Label>
+                 <Select
+                    value={selectedFolderId}
+                    onValueChange={setSelectedFolderId}
+                  >
+                    <SelectTrigger className="h-12 bg-slate-950/50 border-slate-800 text-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500 rounded-xl">
+                      <SelectValue placeholder="Ana Dizin (Dosyasız)" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
+                      <SelectItem value="root" className="focus:bg-slate-800 focus:text-white font-medium text-slate-400">
+                        Ana Dizin (Dosyasız)
+                      </SelectItem>
+                      {folders.map((folder) => (
+                        <SelectItem key={folder.id} value={folder.id} className="focus:bg-slate-800 focus:text-white">
+                            {folder.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">

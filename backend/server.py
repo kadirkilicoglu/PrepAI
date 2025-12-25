@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, File, UploadFile, Form, status
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, File, UploadFile, Form, status, Body
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -47,7 +47,8 @@ GOOGLE_AI_KEY = os.environ.get("GOOGLE_AI_KEY")
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
-# Models
+# --- MODELS ---
+
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
@@ -63,6 +64,16 @@ class User(BaseModel):
     email: EmailStr
     full_name: str
     avatar: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class FolderCreate(BaseModel):
+    name: str
+
+class Folder(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    name: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class Question(BaseModel):
@@ -83,6 +94,7 @@ class Exam(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     user_id: str
+    folder_id: Optional[str] = None 
     title: str
     exam_type: str
     difficulty: str
@@ -114,9 +126,27 @@ class Summary(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     user_id: str
+    folder_id: Optional[str] = None
     title: str
     content: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# --- YENİ EKLENDİ: FLASHCARD MODELLERİ ---
+class Flashcard(BaseModel):
+    term: str
+    definition: str
+
+class FlashcardSet(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    folder_id: Optional[str] = None
+    title: str
+    cards: List[Flashcard]
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class MoveContent(BaseModel):
+    folder_id: Optional[str] # None gönderilirse klasörden çıkarır (root'a atar)
 
 # Helper Functions
 def hash_password(password: str) -> str:
@@ -243,7 +273,6 @@ async def generate_exam_with_ai(pdf_text: str, exam_type: str, difficulty: str, 
     try:
         genai.configure(api_key=GOOGLE_AI_KEY)
         
-        # --- ÖZELLEŞTİRİLMİŞ TALİMATLAR ---
         type_instruction = {
             "multiple_choice": {
                 "instruction": "Çoktan seçmeli sorular oluştur. 'options' listesinde 5 seçenek (A,B,C,D,E) olsun. Doğru cevabı sadece harf olarak (örn: 'A') belirt.",
@@ -305,7 +334,6 @@ async def generate_exam_with_ai(pdf_text: str, exam_type: str, difficulty: str, 
         try: q_data = json.loads(response_text)
         except: q_data = json.loads(response_text.replace("```json", "").replace("```", "").strip())
         
-        # --- TİP DÜZELTME VE STANDARTLAŞTIRMA ---
         for q in q_data:
             if "question_type" in q:
                 q["question_type"] = q["question_type"].replace("-", "_")
@@ -317,6 +345,49 @@ async def generate_exam_with_ai(pdf_text: str, exam_type: str, difficulty: str, 
         return [Question(**q) for q in q_data]
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Text exam error: {str(e)}")
+
+# --- YENİ EKLENDİ: FLASHCARD GENERATION FUNCTION ---
+async def generate_flashcards_with_ai(pdf_text: str) -> List[Flashcard]:
+    try:
+        genai.configure(api_key=GOOGLE_AI_KEY)
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        
+        # İçeriği biraz kırpalım ki token limitine takılmasın
+        content = pdf_text[:10000]
+
+        prompt = f"""Sen uzman bir eğitmensin. Aşağıdaki ders notlarından öğrenciler için çalışma kartları (Flashcards) oluştur.
+        
+        Görev:
+        1. Metindeki en önemli 10-15 terimi, kavramı veya soruyu bul.
+        2. Her biri için kısa, net ve akılda kalıcı bir tanım veya cevap yaz.
+        3. Cevabı sadece JSON formatında ver.
+        
+        Format:
+        [
+          {{
+            "term": "Kavram/Soru",
+            "definition": "Tanım/Cevap"
+          }},
+          ...
+        ]
+        
+        İçerik: {content}
+        """
+
+        response = model.generate_content(prompt)
+        text = response.text.strip()
+        if text.startswith("```"): text = text.split("\n", 1)[1].rsplit("```", 1)[0]
+        
+        try:
+            data = json.loads(text)
+        except:
+            data = json.loads(text.replace("```json", "").replace("```", "").strip())
+            
+        return [Flashcard(**item) for item in data]
+    except Exception as e:
+        logging.error(f"Flashcard gen error: {e}")
+        raise HTTPException(status_code=500, detail="Flashcard generation failed")
+
 
 async def evaluate_answer_with_ai(q_text, c_ans, u_ans, q_type) -> bool:
     try:
@@ -339,6 +410,7 @@ async def evaluate_answer_with_ai(q_text, c_ans, u_ans, q_type) -> bool:
     except: return u_ans.strip().lower() == c_ans.strip().lower()
 
 # --- ROUTES ---
+
 @api_router.post("/auth/register", response_model=dict)
 async def register(ud: UserCreate):
     if await db.users.find_one({"email": ud.email}): raise HTTPException(400, "Email registered")
@@ -366,22 +438,166 @@ async def update_profile(full_name: str = Form(...), avatar: UploadFile = File(N
     await db.users.update_one({"id": cu["id"]}, {"$set": upd})
     return await db.users.find_one({"id": cu["id"]}, {"_id": 0})
 
-@api_router.post("/exams/create", response_model=Exam)
-async def create_exam(pdf: UploadFile = File(...), exam_type: str = Form("mixed"), difficulty: str = Form("medium"), num_questions: int = Form(10), cu: dict = Depends(get_current_user)):
+# --- KLASÖR YÖNETİMİ ---
+
+@api_router.get("/folders", response_model=List[Folder])
+async def get_folders(cu: dict = Depends(get_current_user)):
+    folders = await db.folders.find({"user_id": cu["id"]}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    for f in folders:
+        if isinstance(f["created_at"], str): f["created_at"] = datetime.fromisoformat(f["created_at"])
+    return folders
+
+@api_router.post("/folders", response_model=Folder)
+async def create_folder(folder_data: FolderCreate, cu: dict = Depends(get_current_user)):
+    folder = Folder(user_id=cu["id"], name=folder_data.name)
+    doc = folder.model_dump()
+    doc["created_at"] = doc["created_at"].isoformat()
+    await db.folders.insert_one(doc)
+    return folder
+
+@api_router.delete("/folders/{folder_id}")
+async def delete_folder(folder_id: str, cu: dict = Depends(get_current_user)):
+    # Klasörü sil
+    result = await db.folders.delete_one({"id": folder_id, "user_id": cu["id"]})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Folder not found")
+    
+    # Bu klasördeki sınavları, özetleri ve flashcardları "Dosyasız" yap
+    await db.exams.update_many({"folder_id": folder_id}, {"$set": {"folder_id": None}})
+    await db.summaries.update_many({"folder_id": folder_id}, {"$set": {"folder_id": None}})
+    await db.flashcards.update_many({"folder_id": folder_id}, {"$set": {"folder_id": None}}) # --- EKLENDI ---
+    
+    return {"msg": "Folder deleted, content moved to root"}
+
+@api_router.put("/exams/{eid}/move", response_model=Exam)
+async def move_exam(eid: str, move_data: MoveContent, cu: dict = Depends(get_current_user)):
+    if move_data.folder_id:
+        folder = await db.folders.find_one({"id": move_data.folder_id, "user_id": cu["id"]})
+        if not folder: raise HTTPException(404, "Target folder not found")
+
+    await db.exams.update_one({"id": eid, "user_id": cu["id"]}, {"$set": {"folder_id": move_data.folder_id}})
+    exam = await db.exams.find_one({"id": eid}, {"_id": 0})
+    if isinstance(exam["created_at"], str): exam["created_at"] = datetime.fromisoformat(exam["created_at"])
+    return exam
+
+@api_router.put("/summaries/{sid}/move", response_model=Summary)
+async def move_summary(sid: str, move_data: MoveContent, cu: dict = Depends(get_current_user)):
+    if move_data.folder_id:
+        folder = await db.folders.find_one({"id": move_data.folder_id, "user_id": cu["id"]})
+        if not folder: raise HTTPException(404, "Target folder not found")
+
+    await db.summaries.update_one({"id": sid, "user_id": cu["id"]}, {"$set": {"folder_id": move_data.folder_id}})
+    summary = await db.summaries.find_one({"id": sid}, {"_id": 0})
+    if isinstance(summary["created_at"], str): summary["created_at"] = datetime.fromisoformat(summary["created_at"])
+    return summary
+
+# --- YENİ EKLENDİ: FLASHCARD ENDPOINTS ---
+
+@api_router.post("/flashcards/create", response_model=FlashcardSet)
+async def create_flashcard_set(
+    pdf: UploadFile = File(...),
+    folder_id: Optional[str] = Form(None),
+    cu: dict = Depends(get_current_user)
+):
     if not pdf.filename.endswith('.pdf'): raise HTTPException(400, "PDF only")
+    
+    if folder_id:
+        folder = await db.folders.find_one({"id": folder_id, "user_id": cu["id"]})
+        if not folder: raise HTTPException(404, "Folder not found")
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+        tmp.write(await pdf.read()); tmp_path = tmp.name
+    try:
+        text = extract_text_from_pdf(tmp_path)
+        if not text.strip(): raise HTTPException(400, "No text in PDF")
+        
+        cards = await generate_flashcards_with_ai(text)
+        
+        fc_set = FlashcardSet(
+            user_id=cu["id"],
+            folder_id=folder_id,
+            title=f"Kartlar: {pdf.filename}",
+            cards=cards
+        )
+        
+        doc = fc_set.model_dump()
+        doc["created_at"] = doc["created_at"].isoformat()
+        await db.flashcards.insert_one(doc)
+        return fc_set
+    finally: os.unlink(tmp_path)
+
+@api_router.get("/flashcards", response_model=List[FlashcardSet])
+async def get_flashcard_sets(cu: dict = Depends(get_current_user)):
+    sets = await db.flashcards.find({"user_id": cu["id"]}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    for s in sets:
+        if isinstance(s["created_at"], str): s["created_at"] = datetime.fromisoformat(s["created_at"])
+    return sets
+
+@api_router.get("/flashcards/{fid}", response_model=FlashcardSet)
+async def get_flashcard_set(fid: str, cu: dict = Depends(get_current_user)):
+    fc_set = await db.flashcards.find_one({"id": fid, "user_id": cu["id"]}, {"_id": 0})
+    if not fc_set: raise HTTPException(404, "Flashcard set not found")
+    if isinstance(fc_set["created_at"], str): fc_set["created_at"] = datetime.fromisoformat(fc_set["created_at"])
+    return fc_set
+
+@api_router.delete("/flashcards/{fid}")
+async def delete_flashcard_set(fid: str, cu: dict = Depends(get_current_user)):
+    result = await db.flashcards.delete_one({"id": fid, "user_id": cu["id"]})
+    if result.deleted_count == 0: raise HTTPException(404, "Not found")
+    return {"msg": "Deleted"}
+
+@api_router.put("/flashcards/{fid}/move", response_model=FlashcardSet)
+async def move_flashcard_set(fid: str, move_data: MoveContent, cu: dict = Depends(get_current_user)):
+    if move_data.folder_id:
+        folder = await db.folders.find_one({"id": move_data.folder_id, "user_id": cu["id"]})
+        if not folder: raise HTTPException(404, "Target folder not found")
+
+    await db.flashcards.update_one({"id": fid, "user_id": cu["id"]}, {"$set": {"folder_id": move_data.folder_id}})
+    fc_set = await db.flashcards.find_one({"id": fid}, {"_id": 0})
+    if isinstance(fc_set["created_at"], str): fc_set["created_at"] = datetime.fromisoformat(fc_set["created_at"])
+    return fc_set
+
+# --- MEVCUT ENDPOINTLER ---
+
+@api_router.post("/exams/create", response_model=Exam)
+async def create_exam(
+    pdf: UploadFile = File(...), 
+    exam_type: str = Form("mixed"), 
+    difficulty: str = Form("medium"), 
+    num_questions: int = Form(10), 
+    folder_id: Optional[str] = Form(None), 
+    cu: dict = Depends(get_current_user)
+):
+    if not pdf.filename.endswith('.pdf'): raise HTTPException(400, "PDF only")
+    
+    if folder_id:
+        folder = await db.folders.find_one({"id": folder_id, "user_id": cu["id"]})
+        if not folder: raise HTTPException(404, "Folder not found")
+
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         tmp.write(await pdf.read()); tmp_path = tmp.name
     try:
         qs = await generate_image_based_exam(tmp_path, difficulty, num_questions) if exam_type == "image_based" else await generate_exam_with_ai(extract_text_from_pdf(tmp_path), exam_type, difficulty, num_questions)
-        exam = Exam(user_id=cu["id"], title=f"Exam from {pdf.filename}", exam_type=exam_type, difficulty=difficulty, questions=qs, pdf_name=pdf.filename)
+        
+        exam = Exam(user_id=cu["id"], folder_id=folder_id, title=f"Exam from {pdf.filename}", exam_type=exam_type, difficulty=difficulty, questions=qs, pdf_name=pdf.filename)
+        
         doc = exam.model_dump(); doc["created_at"] = doc["created_at"].isoformat(); doc["questions"] = [q.model_dump() for q in qs]
         await db.exams.insert_one(doc)
         return exam
     finally: os.unlink(tmp_path)
 
 @api_router.post("/summarize")
-async def summarize_pdf_endpoint(pdf: UploadFile = File(...), cu: dict = Depends(get_current_user)):
+async def summarize_pdf_endpoint(
+    pdf: UploadFile = File(...), 
+    folder_id: Optional[str] = Form(None), 
+    cu: dict = Depends(get_current_user)
+):
     if not pdf.filename.endswith('.pdf'): raise HTTPException(400, "Only PDF")
+    
+    if folder_id:
+        folder = await db.folders.find_one({"id": folder_id, "user_id": cu["id"]})
+        if not folder: raise HTTPException(404, "Folder not found")
+
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         tmp.write(await pdf.read()); tmp_path = tmp.name
     try:
@@ -403,6 +619,7 @@ async def summarize_pdf_endpoint(pdf: UploadFile = File(...), cu: dict = Depends
         
         summary_obj = Summary(
             user_id=cu["id"],
+            folder_id=folder_id,
             title=f"Özet: {pdf.filename}",
             content=summary_text
         )
@@ -423,7 +640,6 @@ async def get_summaries(cu: dict = Depends(get_current_user)):
         if isinstance(s["created_at"], str): s["created_at"] = datetime.fromisoformat(s["created_at"])
     return summaries
 
-# --- YENİ EKLENEN TEKİL ÖZET GETİRME FONKSİYONU ---
 @api_router.get("/summaries/{summary_id}", response_model=Summary)
 async def get_summary(summary_id: str, current_user: dict = Depends(get_current_user)):
     summary = await db.summaries.find_one({"id": summary_id, "user_id": current_user["id"]}, {"_id": 0})
@@ -475,6 +691,15 @@ async def get_results(cu: dict = Depends(get_current_user)):
     for r in res: 
         if isinstance(r["submitted_at"], str): r["submitted_at"] = datetime.fromisoformat(r["submitted_at"])
     return res
+
+# --- BU KODU server.py İÇİNE EKLE ---
+
+@api_router.delete("/summaries/{sid}")
+async def delete_summary(sid: str, cu: dict = Depends(get_current_user)):
+    result = await db.summaries.delete_one({"id": sid, "user_id": cu["id"]})
+    if result.deleted_count == 0: raise HTTPException(404, "Summary not found")
+    return {"msg": "Deleted"}
+
 
 @api_router.get("/results/{rid}", response_model=ExamResult)
 async def get_result(rid: str, cu: dict = Depends(get_current_user)):

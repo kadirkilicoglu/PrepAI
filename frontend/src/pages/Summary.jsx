@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
-import { FileText, ArrowLeft, Upload, Loader2, Download, GraduationCap, Sparkles, ScrollText } from "lucide-react";
+import { FileText, ArrowLeft, Upload, Loader2, Download, GraduationCap, Sparkles, ScrollText, Folder } from "lucide-react";
 import { jsPDF } from "jspdf";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:8000";
@@ -15,6 +15,26 @@ export default function Summary() {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [summary, setSummary] = useState("");
+  
+  // Klasör State'leri
+  const [folders, setFolders] = useState([]);
+  const [selectedFolderId, setSelectedFolderId] = useState("");
+
+  useEffect(() => {
+    fetchFolders();
+  }, []);
+
+  const fetchFolders = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${API}/folders`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setFolders(response.data);
+    } catch (error) {
+      console.error("Klasörler yüklenemedi", error);
+    }
+  };
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -32,6 +52,11 @@ export default function Summary() {
 
     const formData = new FormData();
     formData.append("pdf", file);
+    
+    // Klasör seçildiyse ekle
+    if (selectedFolderId) {
+        formData.append("folder_id", selectedFolderId);
+    }
 
     try {
       const token = localStorage.getItem("token");
@@ -127,7 +152,7 @@ export default function Summary() {
       <div className="max-w-7xl mx-auto px-6 py-10 relative z-10">
         <div className="grid lg:grid-cols-2 gap-8 h-full">
           
-          {/* Sol: Yükleme Alanı */}
+          {/* Sol: Yükleme ve Ayarlar Alanı */}
           <div className="space-y-6">
             <Card className="border border-slate-800 bg-slate-900/60 backdrop-blur-xl shadow-2xl h-fit">
               <CardHeader className="border-b border-slate-800 pb-6">
@@ -142,6 +167,8 @@ export default function Summary() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-8 space-y-6">
+                
+                {/* PDF Yükleme Alanı */}
                 <div 
                   className="relative group cursor-pointer"
                   onClick={() => document.getElementById('pdf-input').click()}
@@ -180,6 +207,31 @@ export default function Summary() {
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* Klasör Seçimi (YENİ EKLENDİ) */}
+                <div className="space-y-3">
+                    <label className="text-sm font-medium text-slate-400 ml-1">Kayıt Yeri (İsteğe Bağlı)</label>
+                    <div className="relative">
+                        <div className="absolute left-3 top-3.5 pointer-events-none text-slate-500">
+                            <Folder className="w-5 h-5" />
+                        </div>
+                        <select
+                            value={selectedFolderId}
+                            onChange={(e) => setSelectedFolderId(e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-white focus:outline-none focus:border-purple-500 appearance-none cursor-pointer hover:border-slate-700 transition-colors"
+                        >
+                            <option value="">Ana Dizin (Dosyasız)</option>
+                            {folders.map((folder) => (
+                                <option key={folder.id} value={folder.id}>
+                                    {folder.name}
+                                </option>
+                            ))}
+                        </select>
+                        <div className="absolute right-4 top-4 pointer-events-none">
+                             <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
                 </div>
 
                 <Button 
@@ -236,7 +288,7 @@ export default function Summary() {
                   <GraduationCap className="w-10 h-10 text-slate-600" />
                 </div>
                 <h3 className="text-xl font-medium text-slate-300 mb-2">Henüz Özet Yok</h3>
-                <p className="text-slate-500 max-w-xs">Sol taraftan bir PDF yükleyin ve "Özeti Başlat" butonuna basın.</p>
+                <p className="text-slate-500 max-w-xs">Sol taraftan bir PDF yükleyin, kaydedilecek klasörü seçin ve "Özeti Başlat" butonuna basın.</p>
               </div>
             )}
           </div>
