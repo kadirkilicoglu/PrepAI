@@ -10,7 +10,7 @@ import { Textarea } from "../components/ui/textarea";
 import { ArrowLeft, Send, FileText, CheckCircle2, Clock, Download, Loader2 } from "lucide-react";
 import { jsPDF } from "jspdf";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:8000";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
 const API = `${BACKEND_URL}/api`;
 
 export default function TakeExam() {
