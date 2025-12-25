@@ -18,15 +18,29 @@ import FlashcardPage from "./pages/FlashcardPage";
 import FlashcardDetail from "./pages/FlashcardDetail"; // <--- YENİ EKLENDİ
 
 // ----------------------------------------------------------------------
-// GÜVENLİ URL SEÇİCİ (Bunu diğer dosyalara da kopyala)
+// GÜVENLİ URL SEÇİCİ (Vite + CRA Uyumlu - Hata Korumalı Versiyon)
 // ----------------------------------------------------------------------
 const getBackendUrl = () => {
-  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_BACKEND_URL) {
-    return import.meta.env.VITE_BACKEND_URL;
+  // 1. Vite Kontrolü (Localde npm run dev için)
+  try {
+    if (import.meta.env.VITE_BACKEND_URL) {
+      return import.meta.env.VITE_BACKEND_URL;
+    }
+  } catch (err) {
+    // import.meta desteklenmiyorsa burayı sessizce geçer
   }
-  if (typeof process !== 'undefined' && process.env && process.env.REACT_APP_BACKEND_URL) {
-    return process.env.REACT_APP_BACKEND_URL;
+
+  // 2. CRA / Vercel Kontrolü (Canlı sitede burası çalışacak)
+  try {
+    // process.env kontrolü
+    if (process.env.REACT_APP_BACKEND_URL) {
+      return process.env.REACT_APP_BACKEND_URL;
+    }
+  } catch (err) {
+    // process tanımlı değilse hatayı yutar
   }
+
+  // 3. Hiçbiri yoksa Localhost'a döner
   return "http://localhost:8000";
 };
 
