@@ -1,10 +1,11 @@
 fastapi
 uvicorn
+motor
 pymongo
 python-dotenv
-motor
 google-generativeai
 pypdf2
 passlib[bcrypt]
 python-multipart
 pyjwt
+pdf2image
