@@ -1,9 +1,4 @@
-<<<<<<< HEAD
-=======
 
-
-```markdown
->>>>>>> 0ab9018fbf9e4642a5a7428d95a652fc848f6cb3
 # 🚀 PrepAI - Yapay Zeka Destekli Sınav Hazırlama Platformu
 
 
