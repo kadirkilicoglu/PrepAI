@@ -8,7 +8,23 @@ import { Card, CardContent } from "../components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Brain, Target, Zap, Lock, Mail, User } from "lucide-react";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
+// ----------------------------------------------------------------------
+// GÜVENLİ URL SEÇİCİ (Vite + CRA + Localhost Uyumu)
+// ----------------------------------------------------------------------
+const getBackendUrl = () => {
+  // 1. Önce Vite (import.meta) var mı diye bakar (Canlı ortam ve npm run dev için)
+  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_BACKEND_URL) {
+    return import.meta.env.VITE_BACKEND_URL;
+  }
+  // 2. Yoksa CRA (process.env) var mı diye bakar (npm start için)
+  if (typeof process !== 'undefined' && process.env && process.env.REACT_APP_BACKEND_URL) {
+    return process.env.REACT_APP_BACKEND_URL;
+  }
+  // 3. Hiçbiri yoksa Localhost'a döner
+  return "http://localhost:8000";
+};
+
+const BACKEND_URL = getBackendUrl();
 const API = `${BACKEND_URL}/api`;
 
 export default function AuthPage({ setIsAuthenticated }) {
@@ -34,7 +50,8 @@ export default function AuthPage({ setIsAuthenticated }) {
       toast.success("Giriş başarılı!");
       setIsAuthenticated(true);
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Giriş başarısız");
+      console.error("Login hatası:", error);
+      toast.error(error.response?.data?.detail || "Giriş başarısız. Sunucu bağlantısını kontrol edin.");
     } finally {
       setLoading(false);
     }
@@ -52,6 +69,7 @@ export default function AuthPage({ setIsAuthenticated }) {
       toast.success("Kayıt başarılı!");
       setIsAuthenticated(true);
     } catch (error) {
+      console.error("Register hatası:", error);
       toast.error(error.response?.data?.detail || "Kayıt başarısız");
     } finally {
       setLoading(false);

@@ -6,8 +6,20 @@ import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { ArrowLeft, Download, Calendar, GraduationCap, Loader2, BookOpen, Sparkles } from "lucide-react"; // <-- Sparkles eklendi
 import { jsPDF } from "jspdf";
+// ----------------------------------------------------------------------
+// GÜVENLİ URL SEÇİCİ (Bunu diğer dosyalara da kopyala)
+// ----------------------------------------------------------------------
+const getBackendUrl = () => {
+  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_BACKEND_URL) {
+    return import.meta.env.VITE_BACKEND_URL;
+  }
+  if (typeof process !== 'undefined' && process.env && process.env.REACT_APP_BACKEND_URL) {
+    return process.env.REACT_APP_BACKEND_URL;
+  }
+  return "http://localhost:8000";
+};
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
+const BACKEND_URL = getBackendUrl();
 const API = `${BACKEND_URL}/api`;
 
 export default function SummaryDetail() {
