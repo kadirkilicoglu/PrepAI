@@ -8,19 +8,8 @@ import {
   Folder, FolderPlus, Home, ChevronRight, RotateCw, GraduationCap
 } from "lucide-react";
 
-// ----------------------------------------------------------------------
-// URL AYARI (Otomatik Algılama - .env gerektirmez)
-// ----------------------------------------------------------------------
-const getBackendUrl = () => {
-  // Tarayıcıdaki adres çubuğunu kontrol eder
-  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-    return "http://localhost:8000";
-  }
-  // Localhost değilse, kesinlikle canlı sunucudur
-  return "https://prepai-backend-9e6g.onrender.com";
-};
-
-const API = `${getBackendUrl()}/api`;
+const BACKEND_URL = "http://localhost:8000";
+const API = `${BACKEND_URL}/api`;
 
 export default function Dashboard() {
   const navigate = useNavigate();

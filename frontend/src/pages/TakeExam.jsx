@@ -10,19 +10,8 @@ import { Textarea } from "../components/ui/textarea";
 import { ArrowLeft, Send, FileText, CheckCircle2, Clock, Download, Loader2 } from "lucide-react";
 import { jsPDF } from "jspdf";
 
-// ----------------------------------------------------------------------
-// URL AYARI (Otomatik Algılama - .env gerektirmez)
-// ----------------------------------------------------------------------
-const getBackendUrl = () => {
-  // Tarayıcıdaki adres çubuğunu kontrol eder
-  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-    return "http://localhost:8000";
-  }
-  // Localhost değilse, kesinlikle canlı sunucudur
-  return "https://prepai-backend-9e6g.onrender.com";
-};
-
-const API = `${getBackendUrl()}/api`;
+const BACKEND_URL = "http://localhost:8000";
+const API = `${BACKEND_URL}/api`;
 
 export default function TakeExam() {
   const { examId } = useParams();

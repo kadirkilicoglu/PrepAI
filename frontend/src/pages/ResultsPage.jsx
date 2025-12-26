@@ -7,19 +7,8 @@ import { Card, CardContent } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { ArrowLeft, Trophy, Calendar, CheckCircle2, XCircle, Search, ArrowRight, Target } from "lucide-react";
 
-/// ----------------------------------------------------------------------
-// URL AYARI (Otomatik Algılama - .env gerektirmez)
-// ----------------------------------------------------------------------
-const getBackendUrl = () => {
-  // Tarayıcıdaki adres çubuğunu kontrol eder
-  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-    return "http://localhost:8000";
-  }
-  // Localhost değilse, kesinlikle canlı sunucudur
-  return "https://prepai-backend-9e6g.onrender.com";
-};
-
-const API = `${getBackendUrl()}/api`;
+const BACKEND_URL = "http://localhost:8000";
+const API = `${BACKEND_URL}/api`;
 
 export default function ResultsPage() {
   const navigate = useNavigate();

@@ -7,19 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { ArrowLeft, Download, Calendar, GraduationCap, Loader2, BookOpen, Sparkles } from "lucide-react"; // <-- Sparkles eklendi
 import { jsPDF } from "jspdf";
 
-// ----------------------------------------------------------------------
-// URL AYARI (Otomatik Algılama - .env gerektirmez)
-// ----------------------------------------------------------------------
-const getBackendUrl = () => {
-  // Tarayıcıdaki adres çubuğunu kontrol eder
-  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-    return "http://localhost:8000";
-  }
-  // Localhost değilse, kesinlikle canlı sunucudur
-  return "https://prepai-backend-9e6g.onrender.com";
-};
-
-const API = `${getBackendUrl()}/api`;
+const BACKEND_URL = "http://localhost:8000";
+const API = `${BACKEND_URL}/api`;
 
 export default function SummaryDetail() {
   const { summaryId } = useParams();

@@ -8,19 +8,9 @@ import { Card, CardContent } from "../components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Brain, Target, Zap, Lock, Mail, User } from "lucide-react";
 
-// ----------------------------------------------------------------------
-// URL AYARI (Otomatik Algılama - .env gerektirmez)
-// ----------------------------------------------------------------------
-const getBackendUrl = () => {
-  // Tarayıcıdaki adres çubuğunu kontrol eder
-  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-    return "http://localhost:8000";
-  }
-  // Localhost değilse, kesinlikle canlı sunucudur
-  return "https://prepai-backend-9e6g.onrender.com";
-};
+const BACKEND_URL = "http://localhost:8000";
+const API = `${BACKEND_URL}/api`;
 
-const API = `${getBackendUrl()}/api`;
 
 export default function AuthPage({ setIsAuthenticated }) {
   const [loading, setLoading] = useState(false);
