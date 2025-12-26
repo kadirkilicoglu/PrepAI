@@ -8,34 +8,18 @@ import { FileText, ArrowLeft, Upload, Loader2, Download, GraduationCap, Sparkles
 import { jsPDF } from "jspdf";
 
 // ----------------------------------------------------------------------
-// GÜVENLİ URL SEÇİCİ (Vite + CRA Uyumlu - Hata Korumalı Versiyon)
+// URL AYARI (Otomatik Algılama - .env gerektirmez)
 // ----------------------------------------------------------------------
 const getBackendUrl = () => {
-  // 1. Vite Kontrolü (Localde npm run dev için)
-  try {
-    if (import.meta.env.VITE_BACKEND_URL) {
-      return import.meta.env.VITE_BACKEND_URL;
-    }
-  } catch (err) {
-    // import.meta desteklenmiyorsa burayı sessizce geçer
+  // Tarayıcıdaki adres çubuğunu kontrol eder
+  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+    return "http://localhost:8000";
   }
-
-  // 2. CRA / Vercel Kontrolü (Canlı sitede burası çalışacak)
-  try {
-    // process.env kontrolü
-    if (process.env.REACT_APP_BACKEND_URL) {
-      return process.env.REACT_APP_BACKEND_URL;
-    }
-  } catch (err) {
-    // process tanımlı değilse hatayı yutar
-  }
-
-  // 3. Hiçbiri yoksa Localhost'a döner
-  return "http://localhost:8000";
+  // Localhost değilse, kesinlikle canlı sunucudur
+  return "https://prepai-backend-9e6g.onrender.com";
 };
 
-const BACKEND_URL = getBackendUrl();
-const API = `${BACKEND_URL}/api`;
+const API = `${getBackendUrl()}/api`;
 
 export default function Summary() {
   const navigate = useNavigate();
