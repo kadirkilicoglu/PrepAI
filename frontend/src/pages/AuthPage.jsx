@@ -9,23 +9,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { Brain, Target, Zap, Lock, Mail, User } from "lucide-react";
 
 // ----------------------------------------------------------------------
-// GÜVENLİ URL SEÇİCİ (Vite + CRA + Localhost Uyumu)
+// URL AYARI (Otomatik Algılama - .env gerektirmez)
 // ----------------------------------------------------------------------
 const getBackendUrl = () => {
-  // 1. Önce Vite (import.meta) var mı diye bakar (Canlı ortam ve npm run dev için)
-  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_BACKEND_URL) {
-    return import.meta.env.VITE_BACKEND_URL;
+  // Tarayıcıdaki adres çubuğunu kontrol eder
+  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+    return "http://localhost:8000";
   }
-  // 2. Yoksa CRA (process.env) var mı diye bakar (npm start için)
-  if (typeof process !== 'undefined' && process.env && process.env.REACT_APP_BACKEND_URL) {
-    return process.env.REACT_APP_BACKEND_URL;
-  }
-  // 3. Hiçbiri yoksa Localhost'a döner
-  return "http://localhost:8000";
+  // Localhost değilse, kesinlikle canlı sunucudur
+  return "https://prepai-backend-9e6g.onrender.com";
 };
 
-const BACKEND_URL = getBackendUrl();
-const API = `${BACKEND_URL}/api`;
+const API = `${getBackendUrl()}/api`;
 
 export default function AuthPage({ setIsAuthenticated }) {
   const [loading, setLoading] = useState(false);
